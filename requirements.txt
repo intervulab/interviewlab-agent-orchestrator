@@ -1,0 +1,17 @@
+# Core Framework
+fastapi==0.115.5
+uvicorn[standard]==0.32.1
+python-dotenv==1.0.1
+pydantic==2.10.2
+pydantic-settings==2.6.1
+
+# LangChain — the star of Component 4
+langchain==0.3.7
+langchain-openai==0.2.8
+langchain-core==0.3.19
+
+# OpenAI SDK (used by langchain-openai under the hood)
+openai==1.55.0
+
+# HTTP client (for async requests if needed)
+httpx==0.28.0
