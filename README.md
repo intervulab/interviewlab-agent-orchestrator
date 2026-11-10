@@ -1,4 +1,4 @@
-# 🧠 InterviewLab — Component 4: LangChain Multi-Agent Orchestrator
+# 🧠 InterviewLab — LangChain Multi-Agent Orchestrator
 
 > **Part of the [InterviewLab](https://github.com/orgs/intervulab/repositories) group project.**
 > This microservice is owned by **Component 4** and powers all Generative AI workflows.
