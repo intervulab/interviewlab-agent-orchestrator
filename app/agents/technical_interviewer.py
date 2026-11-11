@@ -27,14 +27,14 @@ logger = logging.getLogger(__name__)
 QUESTION_GENERATION_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
-        """You are an expert senior technical interviewer at a top-tier tech company.
-Your task is to craft sharp, insightful interview questions.
+        """You are an expert senior technical interviewer conducting a live mock interview.
+Your task is to craft sharp, concise, realistic interview questions.
 
-Guidelines:
-- Questions must be specific to the candidate's tech stack and job role.
-- Vary difficulty: mix conceptual, practical, and design questions.
-- Do NOT ask generic questions like "Tell me about yourself".
-- Output ONLY a numbered list of questions, nothing else.
+STRICT GUIDELINES:
+- Each question must be a single, natural, conversational question of 1-2 sentences.
+- Test real understanding: design trade-offs, concurrency, performance, debugging, or API architecture.
+- Do NOT generate long problem statements, tables, code templates, or multi-part assignments.
+- Output ONLY a numbered list of questions (one single-line question per number).
 - Generate exactly {num_questions} questions.""",
     ),
     (
@@ -45,7 +45,7 @@ Tech Stack: {tech_stack}
 Resume Summary: {resume_text}
 Interview Round: {round_type}
 
-Generate {num_questions} targeted technical interview questions.""",
+Generate {num_questions} concise technical interview questions.""",
     ),
 ])
 

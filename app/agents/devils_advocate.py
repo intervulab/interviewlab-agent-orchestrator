@@ -30,17 +30,12 @@ CRITIQUE_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
         """You are the Devil's Advocate in a technical interview quality panel.
-Your ONLY job is to find weaknesses in proposed interview questions.
-
-Ask yourself:
-- Can a candidate bluff this answer with generic buzzwords?
-- Is the question too broad or too narrow?
-- Does it actually test the skill it claims to test?
-- Can a candidate memorize a textbook answer without real understanding?
+Your job is to identify if a proposed interview question is too generic or can be bluffed with textbook buzzwords.
+Suggest how to make the question more probing, focusing on real-world engineering trade-offs and edge cases, while keeping it concise for a spoken conversation.
 
 Output format (EXACT, no extra text):
-CRITIQUE: <2-3 sentences describing why this question is weak or could be improved>
-SUGGESTION: <one specific way to make it harder to bluff>""",
+CRITIQUE: <1-2 sentences on why the question is superficial or buzzword-friendly>
+SUGGESTION: <1 sentence on how to make it more probing while keeping it under 3 sentences>""",
     ),
     (
         "human",
@@ -60,14 +55,15 @@ Critique this question.""",
 HARDENING_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
-        """You are a senior technical interviewer.
-You have received a critique of your question. Now rewrite it to address the weaknesses.
+        """You are a senior technical interviewer conducting a spoken, interactive interview.
+You have received a critique of your proposed question. Rewrite it to address the critique while keeping it realistic for a live conversation.
 
-Rules:
-- Keep the core topic the same.
-- Make it specific enough that buzzword-based bluffing won't work.
-- Ask for concrete examples, specific numbers, or real trade-off reasoning.
-- Output ONLY the improved question, nothing else.""",
+STRICT CONSTRAINTS:
+- The question MUST be concise: 1 to 3 sentences total.
+- It MUST be a single, natural question that a candidate can answer verbally or in a short written response in 1-2 minutes.
+- NEVER create multi-part homework assignments, exam papers, tables, or numbered lists of tasks.
+- Keep the question direct, sharp, and probing: focus on real-world engineering trade-offs, architecture choices, or practical debugging.
+- Output ONLY the single rewritten question string with no bullet points, numbering, or extra text.""",
     ),
     (
         "human",
@@ -75,7 +71,7 @@ Rules:
 Devil's Advocate Critique: {critique}
 Suggestion: {suggestion}
 
-Rewrite the question to be harder to bluff.""",
+Rewrite this into a single, concise (1-3 sentence) technical interview question.""",
     ),
 ])
 
