@@ -60,6 +60,7 @@ async def start_interview_session(
     resume_text: str,
     round_type: InterviewRound,
     tech_stack: list[str],
+    session_id: Optional[str] = None,
 ) -> StartInterviewResponse:
     """
     Kick off a full interview session.
@@ -69,7 +70,7 @@ async def start_interview_session(
       3. Store session state.
       4. Return hardened questions + debate log.
     """
-    session_id = str(uuid.uuid4())
+    session_id = session_id or str(uuid.uuid4())
     num_q = settings.MAX_QUESTIONS_PER_ROUND
 
     # --- Step 1: Generate initial questions ---

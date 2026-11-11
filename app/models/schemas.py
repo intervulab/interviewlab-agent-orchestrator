@@ -24,6 +24,10 @@ class InterviewRound(str, Enum):
 
 class StartInterviewRequest(BaseModel):
     """Sent by the frontend to kick off a fresh interview session."""
+    session_id: Optional[str] = Field(
+        default=None,
+        description="Optional UUID from Component 3 — used when gateway owns session identity",
+    )
     candidate_name: str = Field(..., min_length=1, description="Full name of the candidate")
     job_role: str = Field(..., description="e.g. 'Backend Engineer', 'ML Engineer'")
     resume_text: str = Field(default="", description="Plain-text content of the parsed resume (optional)")
