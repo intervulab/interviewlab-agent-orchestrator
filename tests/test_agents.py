@@ -2,8 +2,8 @@
 Integration tests for the Agent Orchestrator.
 Run with: pytest tests/ -v
 
-NOTE: These tests call the real OpenAI API.
-Set OPENAI_API_KEY in your .env before running.
+NOTE: These tests call the Groq API.
+Set GROQ_API_KEY in your .env before running.
 To mock the LLM calls, replace with LangChain's FakeListChatModel.
 """
 

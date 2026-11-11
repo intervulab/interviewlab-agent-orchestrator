@@ -2,7 +2,7 @@
 Canvas Analysis Agent
 ----------------------
 Receives a JSON graph (nodes + edges) from the System Design Canvas (Component 2)
-and uses an LLM (Grok/OpenAI) to reason about architectural flaws.
+and uses Groq to reason about architectural flaws.
 
 This is a READ-ONLY agent — it never modifies the canvas state.
 """

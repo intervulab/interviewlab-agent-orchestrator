@@ -7,8 +7,7 @@ This file wires everything together:
   - Mounts all API routers (both under /api/v1 and at root for full compatibility)
   - Defines health check endpoints
 
-Run with:
-  uvicorn app.main:app --reload --port 8000
+Powered exclusively by Groq.
 """
 
 from fastapi import FastAPI
@@ -28,7 +27,7 @@ app = FastAPI(
     title="InterviewLab Agent Orchestrator",
     description="""
 ## 🧠 Component 4: Multi-Agent Orchestrator & Debate Engine
-Powered by Grok (xAI) and OpenAI via LangChain.
+Powered exclusively by Groq LPUs via LangChain.
 
 ### Agents
 | Agent | Role |
@@ -79,27 +78,12 @@ app.include_router(canvas_router)
 
 def _get_health_payload():
     s = get_settings()
-    api_key = (
-        getattr(s, "GROQ_API_KEY", "").strip()
-        or s.GROK_API_KEY.strip()
-        or s.XAI_API_KEY.strip()
-        or s.OPENAI_API_KEY.strip()
-    )
-    if api_key.startswith("gsk_") or s.LLM_PROVIDER.lower() == "groq":
-        provider = "groq"
-        model = getattr(s, "GROQ_MODEL", "") or "openai/gpt-oss-120b"
-    elif api_key.startswith("xai-") or s.LLM_PROVIDER.lower() in ("grok", "xai"):
-        provider = "grok"
-        model = s.GROK_MODEL
-    else:
-        provider = "openai"
-        model = s.OPENAI_MODEL
     return {
         "status": "healthy",
         "service": "interviewlab-agent-orchestrator",
         "version": "1.0.0",
-        "provider": provider,
-        "model": model,
+        "provider": "groq",
+        "model": s.GROQ_MODEL,
         "environment": s.APP_ENV,
     }
 
@@ -117,7 +101,7 @@ async def api_health_check():
 @app.get("/", tags=["Root"])
 async def root():
     return {
-        "message": "InterviewLab Agent Orchestrator is running 🧠",
+        "message": "InterviewLab Agent Orchestrator is running with Groq 🧠",
         "docs": "/docs",
         "health": "/health",
     }

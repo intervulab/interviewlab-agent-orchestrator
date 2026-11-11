@@ -88,7 +88,7 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Now open .env and add your OPENAI_API_KEY
+# Now open .env and add your GROQ_API_KEY from https://console.groq.com/keys
 ```
 
 ### 3. Start the server
@@ -189,7 +189,7 @@ Analyse a system design canvas (called by Component 2).
 ## How to Run Tests
 
 ```bash
-# Make sure your .env has a valid OPENAI_API_KEY
+# Make sure your .env has a valid GROQ_API_KEY
 pytest tests/ -v
 ```
 
@@ -240,8 +240,9 @@ Audio Pipeline (Component 5) ──► injects audio_transcript into /answer
 
 | Variable | Description | Default |
 |---|---|---|
-| `OPENAI_API_KEY` | Your OpenAI API key | **Required** |
-| `OPENAI_MODEL` | LLM model name | `gpt-4o-mini` |
+| `GROQ_API_KEY` | Your Groq API key (`gsk_...`) | **Required** |
+| `GROQ_MODEL` | Groq LPU model name | `openai/gpt-oss-120b` |
+| `GROQ_BASE_URL` | Groq endpoint | `https://api.groq.com/openai/v1` |
 | `MAX_DEBATE_ROUNDS` | Devil's Advocate debate iterations | `2` |
 | `MAX_QUESTIONS_PER_ROUND` | Questions per session | `5` |
 | `ALLOWED_ORIGINS` | CORS allowed origins (comma-separated) | `http://localhost:3000` |

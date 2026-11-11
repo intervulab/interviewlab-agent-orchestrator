@@ -8,7 +8,7 @@ Responsibility:
   - Challenge it: Is it too easy? Too vague? Can it be gamed?
   - Produce a hardened, tougher version that is harder to bluff.
 
-Supports both Grok (xAI) and OpenAI via build_llm().
+Supports Groq LPU API via build_llm().
 """
 
 import logging

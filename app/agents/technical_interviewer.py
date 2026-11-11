@@ -7,7 +7,7 @@ Responsibilities:
   3. Evaluate candidate answers and produce a score + feedback.
   4. Optionally produce a follow-up question based on a weak answer.
 
-Supports both Grok (xAI) and OpenAI via build_llm().
+Supports Groq LPU API via build_llm().
 """
 
 import uuid
@@ -59,7 +59,7 @@ async def generate_technical_questions(
     num_questions: int = 5,
 ) -> list[Question]:
     """
-    Call the LLM (Grok/OpenAI) and parse the numbered list into Question objects.
+    Call Groq and parse the numbered list into Question objects.
     """
     llm = build_llm(temperature=0.7)
     chain = QUESTION_GENERATION_PROMPT | llm | StrOutputParser()

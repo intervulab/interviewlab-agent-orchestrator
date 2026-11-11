@@ -6,7 +6,7 @@ Responsibilities:
   2. Produce a holistic HR assessment at the end of a session.
   3. Provide final hiring recommendation based on combined technical + HR scores.
 
-Supports both Grok (xAI) and OpenAI via build_llm().
+Supports Groq LPU API via build_llm().
 """
 
 import uuid

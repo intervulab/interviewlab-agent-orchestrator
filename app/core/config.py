@@ -1,6 +1,6 @@
 """
 Core configuration loaded from environment variables.
-Supports Groq (LPU), Grok (xAI), and OpenAI providers seamlessly.
+Powered exclusively by Groq (https://console.groq.com) for high-speed inference.
 """
 
 from pydantic_settings import BaseSettings
@@ -8,27 +8,12 @@ from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    # --- LLM Provider Selection ---
-    # Options: "groq", "grok", or "openai"
-    LLM_PROVIDER: str = "groq"
-
-    # --- Groq (console.groq.com) Configuration ---
+    # --- Groq API Configuration ---
     GROQ_API_KEY: str = ""
     GROQ_MODEL: str = "openai/gpt-oss-120b"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
-    # --- Grok / xAI Configuration ---
-    GROK_API_KEY: str = ""
-    XAI_API_KEY: str = ""                       # Standard alias used by xAI
-    GROK_BASE_URL: str = "https://api.x.ai/v1"
-    GROK_MODEL: str = "grok-2"                  # grok-2, grok-beta, etc.
-
-    # --- OpenAI Configuration (Alternative / Fallback) ---
-    OPENAI_API_KEY: str = ""
-    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
-    OPENAI_MODEL: str = "gpt-4o-mini"
-
-    # --- App ---
+    # --- App Configuration ---
     APP_ENV: str = "development"
     APP_PORT: int = 8000
     DEBUG: bool = True
