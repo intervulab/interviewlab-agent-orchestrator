@@ -79,13 +79,21 @@ app.include_router(canvas_router)
 
 def _get_health_payload():
     s = get_settings()
-    is_grok = (
-        bool(s.GROK_API_KEY.strip() or s.XAI_API_KEY.strip())
-        or s.OPENAI_API_KEY.strip().startswith("xai-")
-        or s.LLM_PROVIDER.lower() in ("grok", "xai")
+    api_key = (
+        getattr(s, "GROQ_API_KEY", "").strip()
+        or s.GROK_API_KEY.strip()
+        or s.XAI_API_KEY.strip()
+        or s.OPENAI_API_KEY.strip()
     )
-    provider = "grok" if is_grok else "openai"
-    model = s.GROK_MODEL if is_grok else s.OPENAI_MODEL
+    if api_key.startswith("gsk_") or s.LLM_PROVIDER.lower() == "groq":
+        provider = "groq"
+        model = getattr(s, "GROQ_MODEL", "") or "openai/gpt-oss-120b"
+    elif api_key.startswith("xai-") or s.LLM_PROVIDER.lower() in ("grok", "xai"):
+        provider = "grok"
+        model = s.GROK_MODEL
+    else:
+        provider = "openai"
+        model = s.OPENAI_MODEL
     return {
         "status": "healthy",
         "service": "interviewlab-agent-orchestrator",
