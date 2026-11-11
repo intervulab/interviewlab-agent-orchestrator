@@ -8,31 +8,19 @@ Responsibility:
   - Challenge it: Is it too easy? Too vague? Can it be gamed?
   - Produce a hardened, tougher version that is harder to bluff.
 
-This creates the "Internal Debate Loop":
-  Technical Interviewer proposes → Devil's Advocate critiques → 
-  Technical Interviewer hardens → Final question delivered to candidate.
-
-We run this for MAX_DEBATE_ROUNDS rounds to ensure quality.
+Supports both Grok (xAI) and OpenAI via build_llm().
 """
 
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-from langchain.schema.output_parser import StrOutputParser
+import logging
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 
 from app.core.config import get_settings
+from app.core.llm import build_llm
 from app.models.schemas import Question, DebateEntry
 
+logger = logging.getLogger(__name__)
 settings = get_settings()
-
-
-def _build_llm() -> ChatOpenAI:
-    # Slightly lower temperature for more critical/analytical output
-    return ChatOpenAI(
-        model=settings.OPENAI_MODEL,
-        temperature=0.4,
-        openai_api_key=settings.OPENAI_API_KEY,
-    )
-
 
 # ---------------------------------------------------------------------------
 # Step 1: Devil's Advocate critiques the question
@@ -108,7 +96,7 @@ async def run_debate_loop(
     if rounds is None:
         rounds = settings.MAX_DEBATE_ROUNDS
 
-    llm = _build_llm()
+    llm = build_llm(temperature=0.4)
     critique_chain = CRITIQUE_PROMPT | llm | StrOutputParser()
     hardening_chain = HARDENING_PROMPT | llm | StrOutputParser()
 
@@ -117,35 +105,39 @@ async def run_debate_loop(
     current_question_text = question.text
 
     for round_num in range(1, rounds + 1):
-        # --- Devil's Advocate critiques ---
-        critique_raw: str = await critique_chain.ainvoke({
-            "job_role": job_role,
-            "tech_stack": tech_str,
-            "question": current_question_text,
-        })
+        try:
+            # --- Devil's Advocate critiques ---
+            critique_raw: str = await critique_chain.ainvoke({
+                "job_role": job_role,
+                "tech_stack": tech_str,
+                "question": current_question_text,
+            })
 
-        critique = ""
-        suggestion = ""
-        for line in critique_raw.strip().split("\n"):
-            if line.startswith("CRITIQUE:"):
-                critique = line.replace("CRITIQUE:", "").strip()
-            elif line.startswith("SUGGESTION:"):
-                suggestion = line.replace("SUGGESTION:", "").strip()
+            critique = ""
+            suggestion = ""
+            for line in critique_raw.strip().split("\n"):
+                if line.startswith("CRITIQUE:"):
+                    critique = line.replace("CRITIQUE:", "").strip()
+                elif line.startswith("SUGGESTION:"):
+                    suggestion = line.replace("SUGGESTION:", "").strip()
 
-        # Fallback if parsing fails
-        if not critique:
-            critique = critique_raw.strip()
-            suggestion = "Make the question more specific and concrete."
+            if not critique:
+                critique = critique_raw.strip()
+                suggestion = "Require concrete production metrics and failure scenarios."
 
-        # --- Technical Interviewer hardens ---
-        hardened_text: str = await hardening_chain.ainvoke({
-            "original_question": current_question_text,
-            "critique": critique,
-            "suggestion": suggestion,
-        })
-        hardened_text = hardened_text.strip()
+            # --- Technical Interviewer hardens ---
+            hardened_text: str = await hardening_chain.ainvoke({
+                "original_question": current_question_text,
+                "critique": critique,
+                "suggestion": suggestion,
+            })
+            hardened_text = hardened_text.strip()
+        except Exception as e:
+            logger.warning(f"Debate loop LLM call failed, using heuristic hardening: {e}")
+            critique = "Question could be easily bluffed with generic textbook definitions."
+            suggestion = "Add concrete throughput metrics and edge-case failure considerations."
+            hardened_text = f"{current_question_text} Specifically, discuss failure modes under high load and the trade-offs you must make."
 
-        # Log this debate round
         debate_log.append(DebateEntry(
             round_number=round_num,
             original_question=current_question_text,
@@ -153,10 +145,8 @@ async def run_debate_loop(
             hardened_question=hardened_text,
         ))
 
-        # The hardened question becomes input for the next round
         current_question_text = hardened_text
 
-    # Build the final hardened Question object
     hardened_question = Question(
         question_id=question.question_id,
         text=current_question_text,
