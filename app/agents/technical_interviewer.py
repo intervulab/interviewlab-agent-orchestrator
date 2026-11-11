@@ -11,6 +11,7 @@ Supports Groq LPU API via build_llm().
 """
 
 import uuid
+import re
 import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -126,19 +127,23 @@ async def generate_technical_questions(
 EVALUATION_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
-        """You are a strict but fair senior technical interviewer.
-Evaluate the candidate's answer on a scale of 0–10.
+        """You are an objective, fair, and encouraging technical interviewer evaluating a candidate's response.
+Evaluate the candidate's answer on a scale of 0 to 10 based on:
+1. Technical Correctness: Did the candidate answer accurately?
+2. Conceptual Understanding: Did they explain the reasoning and core concepts well?
+3. Practical Application: Did they provide a relevant code example or use case when appropriate?
 
-Scoring rubric:
-  0–3  : Incorrect or completely missing the point
-  4–6  : Partially correct, lacks depth
-  7–8  : Good answer, minor gaps
-  9–10 : Excellent, demonstrates deep understanding
+Scoring Rubric (0 to 10):
+  9–10 (Exceptional): Accurate, comprehensive, clear explanation with solid examples.
+  7–8  (Strong / Good): Accurate and covers the core points well with minor omissions.
+  5–6  (Adequate / Partial): Basic understanding shown, but misses key details or implementation.
+  3–4  (Weak): Superficial, incomplete, or partially incorrect.
+  0–2  (Poor / Off-topic): Completely incorrect, blank, or irrelevant.
 
-Respond in this EXACT format (no extra text):
-SCORE: <integer 0-10>
-FEEDBACK: <2-3 sentence evaluation>
-FOLLOW_UP: <one follow-up question if score < 7, else NONE>""",
+Format your response EXACTLY like this (one field per line):
+SCORE: <integer from 0 to 10>
+FEEDBACK: <2-3 sentences of specific, constructive feedback explaining what was good and what could be improved>
+FOLLOW_UP: NONE""",
     ),
     (
         "human",
@@ -146,7 +151,7 @@ FOLLOW_UP: <one follow-up question if score < 7, else NONE>""",
 Question: {question}
 Candidate's Answer: {answer}
 
-Evaluate the answer.""",
+Evaluate the answer and provide SCORE, FEEDBACK, and FOLLOW_UP.""",
     ),
 ])
 
@@ -160,7 +165,7 @@ async def evaluate_answer(
     """
     Evaluate a candidate answer. Returns score, feedback, and optional follow-up.
     """
-    llm = build_llm(temperature=0.3)
+    llm = build_llm(temperature=0.2)
     chain = EVALUATION_PROMPT | llm | StrOutputParser()
 
     try:
@@ -170,21 +175,22 @@ async def evaluate_answer(
             "answer": candidate_answer,
         })
 
-        score = 5
-        feedback = "Evaluation processed."
+        score = 6
+        feedback = "Answer demonstrates baseline technical understanding."
         follow_up = None
 
         for line in raw.strip().split("\n"):
-            if line.startswith("SCORE:"):
-                try:
-                    score = int(line.replace("SCORE:", "").strip())
-                except ValueError:
-                    pass
-            elif line.startswith("FEEDBACK:"):
-                feedback = line.replace("FEEDBACK:", "").strip()
-            elif line.startswith("FOLLOW_UP:"):
-                fu = line.replace("FOLLOW_UP:", "").strip()
-                follow_up = None if fu.upper() == "NONE" else fu
+            clean = line.replace("*", "").strip()
+            score_m = re.search(r"SCORE:\s*(\d+(?:\.\d+)?)", clean, re.IGNORECASE)
+            if score_m:
+                score = int(round(float(score_m.group(1))))
+            feed_m = re.search(r"FEEDBACK:\s*(.+)", clean, re.IGNORECASE)
+            if feed_m:
+                feedback = feed_m.group(1).strip()
+            fu_m = re.search(r"FOLLOW_UP:\s*(.+)", clean, re.IGNORECASE)
+            if fu_m:
+                fu = fu_m.group(1).strip()
+                follow_up = None if fu.upper() in ["NONE", "N/A", "NO", ""] else fu
 
         return EvaluationResult(
             question_id=question_id,
@@ -196,7 +202,6 @@ async def evaluate_answer(
         )
     except Exception as e:
         logger.warning(f"LLM answer evaluation failed, using fallback heuristic: {e}")
-        # Intelligent heuristic fallback
         ans_len = len(candidate_answer.strip().split())
         score = min(9, max(4, ans_len // 10 + 4)) if ans_len > 5 else 4
         return EvaluationResult(
@@ -205,5 +210,5 @@ async def evaluate_answer(
             candidate_answer=candidate_answer,
             score=score,
             feedback="Answer demonstrates conceptual familiarity with standard system engineering trade-offs.",
-            follow_up_question="Can you elaborate on how you would benchmark this solution under peak load?",
+            follow_up_question=None,
         )

@@ -10,6 +10,7 @@ Supports Groq LPU API via build_llm().
 """
 
 import uuid
+import re
 import logging
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -165,16 +166,20 @@ async def generate_hr_assessment(
         })
 
         for line in raw.strip().split("\n"):
-            if line.startswith("ASSESSMENT:"):
-                result["assessment"] = line.replace("ASSESSMENT:", "").strip()
-            elif line.startswith("STRENGTHS:"):
-                raw_str = line.replace("STRENGTHS:", "").strip()
-                result["strengths"] = [s.strip() for s in raw_str.split(",")]
-            elif line.startswith("WEAKNESSES:"):
-                raw_wk = line.replace("WEAKNESSES:", "").strip()
-                result["weaknesses"] = [w.strip() for w in raw_wk.split(",")]
-            elif line.startswith("RECOMMENDATION:"):
-                result["recommendation"] = line.replace("RECOMMENDATION:", "").strip()
+            clean = line.replace("*", "").strip()
+            if re.search(r"^ASSESSMENT:\s*(.+)", clean, re.IGNORECASE):
+                m = re.search(r"^ASSESSMENT:\s*(.+)", clean, re.IGNORECASE)
+                result["assessment"] = m.group(1).strip()
+            elif re.search(r"^STRENGTHS:\s*(.+)", clean, re.IGNORECASE):
+                m = re.search(r"^STRENGTHS:\s*(.+)", clean, re.IGNORECASE)
+                result["strengths"] = [s.strip() for s in m.group(1).split(",") if s.strip()]
+            elif re.search(r"^WEAKNESSES:\s*(.+)", clean, re.IGNORECASE):
+                m = re.search(r"^WEAKNESSES:\s*(.+)", clean, re.IGNORECASE)
+                result["weaknesses"] = [w.strip() for w in m.group(1).split(",") if w.strip()]
+            elif re.search(r"^RECOMMENDATION:\s*(.+)", clean, re.IGNORECASE):
+                m = re.search(r"^RECOMMENDATION:\s*(.+)", clean, re.IGNORECASE)
+                rec = m.group(1).strip()
+                result["recommendation"] = rec
     except Exception as e:
         logger.warning(f"HR assessment LLM call failed, using default evaluation: {e}")
 
