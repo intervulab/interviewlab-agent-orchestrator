@@ -43,6 +43,32 @@ from app.agents.hr_agent import generate_hr_questions, generate_hr_assessment
 
 settings = get_settings()
 
+
+def sanitize_text(text: str) -> str:
+    """Normalize tricky unicode characters (non-breaking hyphens, math symbols, em-dashes, curly quotes) to clean ASCII."""
+    if not text:
+        return ""
+    replacements = {
+        "≤": "<=",
+        "≥": ">=",
+        "≈": "~",
+        "≠": "!=",
+        "–": "-",
+        "—": "--",
+        "‑": "-",
+        "‘": "'",
+        "’": "'",
+        "“": '"',
+        "”": '"',
+        "…": "...",
+        "\u202f": " ",
+        "\u00a0": " ",
+    }
+    for orig, repl in replacements.items():
+        text = text.replace(orig, repl)
+    return text.encode('ascii', errors='replace').decode('ascii')
+
+
 # ---------------------------------------------------------------------------
 # In-memory session store
 # In production, replace this dict with a Redis hash per session_id
@@ -92,26 +118,41 @@ async def start_interview_session(
             num_questions=num_q,
         )
 
-    # --- Step 2: Run debate loop on all questions IN PARALLEL ---
-    # asyncio.gather runs all coroutines concurrently — much faster than sequential
-    debate_tasks = [
-        run_debate_loop(
-            question=q,
-            job_role=job_role,
-            tech_stack=tech_stack,
-            rounds=settings.MAX_DEBATE_ROUNDS,
-        )
-        for q in raw_questions
-    ]
+    # --- Step 2: Run debate loop on questions with smooth pacing ---
+    debate_results: list[tuple[Question, list[DebateEntry]]] = []
+    for q in raw_questions:
+        try:
+            res = await run_debate_loop(
+                question=q,
+                job_role=job_role,
+                tech_stack=tech_stack,
+                rounds=settings.MAX_DEBATE_ROUNDS,
+            )
+            debate_results.append(res)
+            # Brief pause to respect Groq tokens-per-minute rate limits
+            await asyncio.sleep(0.2)
+        except Exception as deb_err:
+            debate_results.append((q, []))
 
-    debate_results: list[tuple[Question, list[DebateEntry]]] = await asyncio.gather(*debate_tasks)
-
-    # Unpack results
+    # Unpack and sanitize results for clean database persistence
     hardened_questions: list[Question] = []
     all_debate_logs: list[DebateEntry] = []
     for hardened_q, debate_log in debate_results:
-        hardened_questions.append(hardened_q)
-        all_debate_logs.extend(debate_log)
+        sanitized_q = Question(
+            question_id=hardened_q.question_id,
+            text=sanitize_text(hardened_q.text),
+            source_agent=hardened_q.source_agent,
+            hardened=hardened_q.hardened,
+            rationale=sanitize_text(hardened_q.rationale) if hardened_q.rationale else None,
+        )
+        hardened_questions.append(sanitized_q)
+        for entry in debate_log:
+            all_debate_logs.append(DebateEntry(
+                round_number=entry.round_number,
+                original_question=sanitize_text(entry.original_question),
+                devils_challenge=sanitize_text(entry.devils_challenge),
+                hardened_question=sanitize_text(entry.hardened_question),
+            ))
 
     # --- Step 3: Store session ---
     _sessions[session_id] = {
@@ -167,11 +208,19 @@ async def process_candidate_answer(
         effective_answer = f"{candidate_answer}\n\n[Audio Transcript]: {audio_transcript}"
 
     # Evaluate
-    evaluation = await evaluate_answer(
+    raw_eval = await evaluate_answer(
         question_id=question_id,
         question_text=question.text,
         candidate_answer=effective_answer,
         job_role=session["job_role"],
+    )
+    evaluation = EvaluationResult(
+        question_id=raw_eval.question_id,
+        question_text=sanitize_text(raw_eval.question_text),
+        candidate_answer=sanitize_text(raw_eval.candidate_answer),
+        score=raw_eval.score,
+        feedback=sanitize_text(raw_eval.feedback),
+        follow_up_question=sanitize_text(raw_eval.follow_up_question) if raw_eval.follow_up_question else None,
     )
     session["evaluations"].append(evaluation)
 

@@ -10,7 +10,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     # --- Groq API Configuration ---
     GROQ_API_KEY: str = ""
-    GROQ_MODEL: str = "openai/gpt-oss-120b"
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
     GROQ_BASE_URL: str = "https://api.groq.com/openai/v1"
 
     # --- App Configuration ---
@@ -23,8 +23,8 @@ class Settings(BaseSettings):
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:4000"
 
     # --- Interview defaults ---
-    MAX_DEBATE_ROUNDS: int = 2        # how many times Devil's Advocate challenges
-    MAX_QUESTIONS_PER_ROUND: int = 5  # max questions the interviewer generates
+    MAX_DEBATE_ROUNDS: int = 1        # how many times Devil's Advocate challenges
+    MAX_QUESTIONS_PER_ROUND: int = 3  # max questions the interviewer generates
 
     class Config:
         env_file = ".env"
