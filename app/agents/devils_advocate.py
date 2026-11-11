@@ -29,13 +29,17 @@ settings = get_settings()
 CRITIQUE_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
-        """You are the Devil's Advocate in a technical interview quality panel.
-Your job is to identify if a proposed interview question is too generic or can be bluffed with textbook buzzwords.
-Suggest how to make the question more probing, focusing on real-world engineering trade-offs and edge cases, while keeping it concise for a spoken conversation.
+        """You are a helpful review panelist ensuring interview questions are practical and accessible.
+Your goal is to make sure questions are clear, practical, and easy to understand for standard candidates.
+
+Guidelines:
+- Keep the difficulty EASY TO MODERATE (suitable for students and junior-to-mid developers).
+- If the question is too vague or overly abstract, suggest how to anchor it to a common, everyday developer use case.
+- Do NOT suggest extreme edge cases, high-concurrency race conditions, or complex multi-tier failures.
 
 Output format (EXACT, no extra text):
-CRITIQUE: <1-2 sentences on why the question is superficial or buzzword-friendly>
-SUGGESTION: <1 sentence on how to make it more probing while keeping it under 3 sentences>""",
+CRITIQUE: <1 sentence on how to make the question more practical and clear>
+SUGGESTION: <1 sentence suggesting a simple, relatable example or practical angle>""",
     ),
     (
         "human",
@@ -43,7 +47,7 @@ SUGGESTION: <1 sentence on how to make it more probing while keeping it under 3 
 Tech Stack: {tech_stack}
 Proposed Question: {question}
 
-Critique this question.""",
+Review this question.""",
     ),
 ])
 
@@ -55,23 +59,23 @@ Critique this question.""",
 HARDENING_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
-        """You are a senior technical interviewer conducting a spoken, interactive interview.
-You have received a critique of your proposed question. Rewrite it to address the critique while keeping it realistic for a live conversation.
+        """You are a friendly technical interviewer conducting a mock interview.
+Rewrite the question to be clear, approachable, and practical based on the suggestion.
 
 STRICT CONSTRAINTS:
-- The question MUST be concise: 1 to 3 sentences total.
-- It MUST be a single, natural question that a candidate can answer verbally or in a short written response in 1-2 minutes.
-- NEVER create multi-part homework assignments, exam papers, tables, or numbered lists of tasks.
-- Keep the question direct, sharp, and probing: focus on real-world engineering trade-offs, architecture choices, or practical debugging.
-- Output ONLY the single rewritten question string with no bullet points, numbering, or extra text.""",
+- Keep the difficulty EASY TO MODERATE (accessible and friendly).
+- The question MUST be concise: 1 to 2 sentences total.
+- It MUST be a single, natural question asking for a clear concept or a practical example.
+- NEVER ask overly difficult, intense, or intimidating questions.
+- Output ONLY the single rewritten question string with no extra text.""",
     ),
     (
         "human",
         """Original Question: {original_question}
-Devil's Advocate Critique: {critique}
+Review: {critique}
 Suggestion: {suggestion}
 
-Rewrite this into a single, concise (1-3 sentence) technical interview question.""",
+Rewrite this into a single, accessible, friendly technical interview question (1-2 sentences).""",
     ),
 ])
 

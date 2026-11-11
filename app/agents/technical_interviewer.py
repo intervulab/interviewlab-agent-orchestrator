@@ -27,13 +27,15 @@ logger = logging.getLogger(__name__)
 QUESTION_GENERATION_PROMPT = ChatPromptTemplate.from_messages([
     (
         "system",
-        """You are an expert senior technical interviewer conducting a live mock interview.
-Your task is to craft sharp, concise, realistic interview questions.
+        """You are a friendly, encouraging technical interviewer conducting a mock interview for students and early-career developers.
+Your task is to craft clear, approachable, and practical interview questions.
 
-STRICT GUIDELINES:
-- Each question must be a single, natural, conversational question of 1-2 sentences.
-- Test real understanding: design trade-offs, concurrency, performance, debugging, or API architecture.
-- Do NOT generate long problem statements, tables, code templates, or multi-part assignments.
+GUIDELINES:
+- Difficulty level: EASY to MODERATE (accessible, foundational, practical).
+- Ask about core concepts, common patterns, and practical everyday use cases (e.g. "What is X, why do we use it, and how does it compare to Y?").
+- Keep each question simple, clear, and direct (1-2 sentences maximum).
+- Do NOT ask about extreme distributed systems edge cases, multi-region partition failures, or microsecond optimizations.
+- Focus on foundational topics relevant to the job role and tech stack (e.g. REST API design, database basics, asynchronous programming, error handling, clean code).
 - Output ONLY a numbered list of questions (one single-line question per number).
 - Generate exactly {num_questions} questions.""",
     ),
@@ -45,7 +47,7 @@ Tech Stack: {tech_stack}
 Resume Summary: {resume_text}
 Interview Round: {round_type}
 
-Generate {num_questions} concise technical interview questions.""",
+Generate {num_questions} clear, friendly, and accessible technical interview questions.""",
     ),
 ])
 
@@ -99,11 +101,11 @@ async def generate_technical_questions(
     # Fallback questions tailored to the job role if API key is invalid or offline
     role = job_role or "Software Engineer"
     fallbacks = [
-        f"Explain the architecture and trade-offs of asynchronous I/O in high-throughput {role} services.",
-        "How do you design an idempotent payment processing API to handle network retries and race conditions?",
-        "Describe how you would isolate and debug a latency spike in a microservices deployment.",
-        "Compare optimistic vs. pessimistic locking in relational databases under high-write contention.",
-        "How do you structure database connection pooling and query caching to prevent thread pool starvation?",
+        "What is the difference between SQL and NoSQL databases, and when would you choose one over the other?",
+        "How do async/await and promises work in asynchronous programming, and why are they useful?",
+        "What are the main HTTP methods used in REST APIs (such as GET, POST, PUT, DELETE), and what is each used for?",
+        "What is database indexing, and how does it help improve search query performance?",
+        "Can you explain what middleware is in web development and give a common practical example like authentication or logging?",
     ]
     return [
         Question(
