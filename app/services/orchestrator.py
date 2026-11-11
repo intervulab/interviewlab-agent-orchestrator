@@ -281,8 +281,8 @@ async def get_session_summary(session_id: str) -> SessionSummaryResponse:
         candidate_name=session["candidate_name"],
         overall_score=overall_score,
         per_question_results=evaluations,
-        hr_assessment=hr_data["assessment"],
-        strengths=hr_data["strengths"],
-        weaknesses=hr_data["weaknesses"],
-        hiring_recommendation=hr_data["recommendation"],
+        hr_assessment=sanitize_text(hr_data.get("assessment", "")),
+        strengths=[sanitize_text(s) for s in hr_data.get("strengths", [])],
+        weaknesses=[sanitize_text(w) for w in hr_data.get("weaknesses", [])],
+        hiring_recommendation=sanitize_text(hr_data.get("recommendation", "Hire")),
     )
