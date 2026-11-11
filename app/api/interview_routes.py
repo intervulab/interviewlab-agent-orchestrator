@@ -48,6 +48,7 @@ async def start_interview(payload: StartInterviewRequest) -> StartInterviewRespo
             round_type=payload.round_type,
             tech_stack=payload.tech_stack,
             session_id=payload.session_id,
+            num_questions=payload.num_questions,
         )
     except Exception as e:
         raise HTTPException(

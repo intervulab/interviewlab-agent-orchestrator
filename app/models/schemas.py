@@ -33,6 +33,7 @@ class StartInterviewRequest(BaseModel):
     resume_text: str = Field(default="", description="Plain-text content of the parsed resume (optional)")
     round_type: InterviewRound = Field(default=InterviewRound.TECHNICAL)
     tech_stack: list[str] = Field(default_factory=list, description="e.g. ['Python', 'FastAPI', 'PostgreSQL']")
+    num_questions: Optional[int] = Field(default=3, ge=1, le=15, description="Number of interview questions to generate (default 3)")
 
 
 class AnswerRequest(BaseModel):

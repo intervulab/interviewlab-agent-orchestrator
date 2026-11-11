@@ -87,6 +87,7 @@ async def start_interview_session(
     round_type: InterviewRound,
     tech_stack: list[str],
     session_id: Optional[str] = None,
+    num_questions: Optional[int] = None,
 ) -> StartInterviewResponse:
     """
     Kick off a full interview session.
@@ -97,7 +98,7 @@ async def start_interview_session(
       4. Return hardened questions + debate log.
     """
     session_id = session_id or str(uuid.uuid4())
-    num_q = settings.MAX_QUESTIONS_PER_ROUND
+    num_q = num_questions if (num_questions and num_questions > 0) else (settings.MAX_QUESTIONS_PER_ROUND or 3)
 
     # --- Step 1: Generate initial questions ---
     if round_type == InterviewRound.HR:
